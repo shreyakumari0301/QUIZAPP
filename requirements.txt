@@ -11,6 +11,7 @@ python-dotenv==1.0.1
 SQLAlchemy==2.0.38
 typing_extensions==4.12.2
 Werkzeug==3.1.3
+gunicorn==20.1.0
 
 # Note: Include Chart.js via CDN in your HTML
 # Example: <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
