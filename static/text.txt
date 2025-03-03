@@ -1,0 +1,1882 @@
+view_attempt>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Attempt Details</title>
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        h3 {
+            color: #34495e;
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: #ecf0f1;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        li.correct {
+            color: white;
+            font-weight: bold;
+            background: #2ecc71;
+        }
+
+        li.wrong {
+            color: white;
+            background: #e74c3c;
+        }
+
+        p strong {
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h2 {
+                font-size: 22px;
+            }
+            p, h3 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Quiz: {{ quiz.name }}</h2>
+        <p><strong>Attempt Date:</strong> {{ attempt.attempt_date.strftime('%Y-%m-%d %H:%M') }}</p>
+        <p><strong>Score:</strong> {{ attempt.score }} / {{ attempt.total_questions }}</p>
+
+        {% for question in questions %}
+        <div>
+            <h3>Q{{ loop.index }}: {{ question.question_statement }}</h3>
+            <ul>
+                {% set selected_option = attempt.student_answers.get(question.id|string, {}).get('selected_option', "No Answer") %}
+                {% for option in [question.option1, question.option2, question.option3, question.option4] %}
+                {% if option %}
+                <li class="{% if option == question.correct_answer %}correct{% elif option == selected_option and option != question.correct_answer %}wrong{% endif %}">
+                    {{ option }}
+                </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+            <p><strong>Your Answer:</strong> {{ selected_option }}</p>
+            <p><strong>Correct Answer:</strong> {{ question.correct_answer }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
+
+<<<<<<<<,,- student_chapters>>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.name }} - Chapters</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .chapter-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .quiz-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+        }
+        .quiz-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .deadline-warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar (same as HomePage.html) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Notes</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Your Performance</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Contact Us</a></li>
+            </ul>
+            {% if user %}
+                <span class="navbar-text">Welcome, {{ user.full_name }}!</span>
+                <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-primary" href="{{ url_for('routes.login') }}">Log In</a>
+                <a class="btn btn-secondary ml-2" href="{{ url_for('routes.register') }}">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>{{ course.name }} - Chapters</h1>
+            <a href="{{ url_for('routes.home') }}" class="btn btn-secondary">Back to Courses</a>
+        </div>
+
+        {% for chapter in chapters %}
+        <div class="chapter-card">
+            <h3>{{ chapter.name }}</h3>
+            
+            {% if chapter.quizzes %}
+            <div class="quizzes-section">
+                <h5 class="mt-3">Available Quizzes:</h5>
+                {% for quiz in chapter.quizzes %}
+                <div class="quiz-card">
+                    <h6>{{ quiz.name }}</h6>
+                    <div class="quiz-info">
+                        <p class="mb-1">
+                            <strong>Duration:</strong> {{ quiz.duration }} minutes
+                        </p>
+                        <p class="mb-1">
+                            <strong>Deadline:</strong> 
+                            <span {% if quiz.is_deadline_close %}class="deadline-warning"{% endif %}>
+                                {{ quiz.date_of_quiz.strftime('%Y-%m-%d') }}
+                            </span>
+                        </p>
+                        {% if quiz.attempted %}
+                            <p class="text-success mb-1">Quiz Completed</p>
+                            <p class="mb-1"><strong>Score:</strong> {{ quiz.score }}/{{ quiz.total_questions }}</p>
+                        {% else %}
+                            {% if quiz.is_available %}
+                                <a href="{{ url_for('routes.take_test', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">Take Test</a>
+                            {% else %}
+                                <button class="btn btn-secondary btn-sm" disabled>Past Due</button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No quizzes available for this chapter.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html> 
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, date
+from models import db, User, Course, Score, Chapter, Question, Quiz, StudentQuizAttempt
+from flask import Blueprint
+from flask_login import login_required, current_user
+
+app = Blueprint('routes', __name__)
+
+@app.route('/')
+def home():
+    user_id = session.get('user_id')  # Get user ID from session
+    user = User.query.get(user_id) if user_id else None  # Fetch user if logged in
+    courses = []
+
+    if user:
+        courses = Course.query.filter_by(category=user.qualification).all()  # Fetch courses based on user's qualification
+
+    return render_template('HomePage.html', user=user, courses=courses)  # Pass user and courses to template
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        full_name = request.form['full_name']
+        qualification = request.form['qualification']
+        dob = request.form['dob']
+
+        # Check if the username already exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists. Please choose a different one.', 'danger')
+            return redirect(url_for('routes.register'))
+
+        # Create a new user
+        new_user = User(
+            username=username,
+            full_name=full_name,
+            qualification=qualification,
+            dob=datetime.strptime(dob, '%Y-%m-%d').date()  # Convert to date object
+        )
+        new_user.set_password(password)  # Hash the password
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('routes.login'))
+
+    return render_template('register.html')  # Render registration template
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            session['user_id'] = user.id  # Store user ID in session
+            session['is_admin'] = user.is_admin  # Store admin status in session
+            flash('Login successful!', 'success')
+            if user.is_admin:
+                return redirect(url_for('routes.admin_dashboard'))  # Redirect to admin dashboard
+            return redirect(url_for('routes.home'))  # Redirect to home for regular users
+        else:
+            flash('Invalid username or password.', 'danger')
+
+    return render_template('login.html')  # Render login template
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Remove user ID from session
+    flash('You have been logged out.', 'success')  # Flash message
+    return redirect(url_for('routes.home'))  # Redirect to home
+
+@app.route('/courses', methods=['GET', 'POST'])
+def courses():
+    search_query = request.args.get('search', '')
+    category_filter = request.args.get('category', '')
+
+    # Fetch courses based on search query and category
+    query = Course.query
+    if search_query:
+        query = query.filter(Course.name.ilike(f'%{search_query}%'))
+    if category_filter:
+        query = query.filter(Course.category == category_filter)
+
+    courses = query.all()
+    return render_template('courses.html', courses=courses, search_query=search_query, category_filter=category_filter)
+
+@app.route('/add_course', methods=['POST'])
+def add_course():
+    course_name = request.form['course_name']
+    category = request.form['category']
+    new_course = Course(name=course_name, category=category)
+    db.session.add(new_course)
+    db.session.commit()
+    flash('Course added successfully!', 'success')
+    return redirect(url_for('routes.admin_dashboard'))  # Redirect back to the dashboard
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    # Initialize categorized_courses
+    categorized_courses = {
+        'Foundation': [],
+        'Diploma': [],
+        'Degree': []
+    }
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+    
+    # Categorize courses safely
+    for course in courses:
+        if course.category in categorized_courses:
+            categorized_courses[course.category].append(course)
+        else:
+            # Handle unexpected categories by either ignoring them or adding them dynamically
+            categorized_courses.setdefault(course.category, []).append(course)
+
+    return render_template('admin_dashboard.html', categorized_courses=categorized_courses)
+
+@app.route('/chapters/<int:course_id>')
+def chapters(course_id):
+    course = Course.query.get(course_id)  # Fetch the course by ID
+    chapters = Chapter.query.filter_by(course_id=course_id).all()  
+    # Fetch chapters for the selected course
+    questions = Question.query.filter(Question.chapter_id.in_([c.id for c in chapters])).all()
+    
+    return render_template('chapters.html', course=course, chapters=chapters, questions = questions)
+
+@app.route('/add_chapter', methods=['POST'])
+def add_chapter():
+    chapter_name = request.form['chapter_name']
+    course_id = request.form['course_id']
+    new_chapter = Chapter(name=chapter_name, course_id=course_id)
+    db.session.add(new_chapter)
+    db.session.commit()
+    flash('Chapter added successfully!', 'success')
+    return redirect(url_for('routes.chapters', course_id=course_id))
+
+@app.route('/edit_chapter/<int:chapter_id>', methods=['GET', 'POST'])
+def edit_chapter(chapter_id):
+    chapter = Chapter.query.get(chapter_id)
+    if request.method == 'POST':
+        chapter.name = request.form['chapter_name']
+        db.session.commit()
+        flash('Chapter updated successfully!', 'success')
+        return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+    return render_template('edit_chapter.html', chapter=chapter)
+
+@app.route('/chapters/<int:chapter_id>/delete', methods=['POST'])
+def delete_chapter(chapter_id):
+    chapter = Chapter.query.get(chapter_id)
+    if chapter:
+        # Delete all quizzes associated with the chapter
+        for quiz in chapter.quizzes:
+            db.session.delete(quiz)
+        db.session.delete(chapter)
+        db.session.commit()
+        flash('Chapter and associated quizzes deleted successfully!', 'success')
+    else:
+        flash('Chapter not found!', 'danger')
+    return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+    
+@app.route('/add_question', methods=['POST'])
+def add_question():
+    try:
+        question_statement = request.form['question_statement']
+        quiz_id = request.form['quiz_id']
+        chapter_id = request.form['chapter_id']
+        
+        # Debug print
+        print(f"Received chapter_id: {chapter_id}")
+        
+        option1 = request.form['option1']
+        option2 = request.form['option2']
+        option3 = request.form['option3']
+        option4 = request.form['option4']
+        correct_answer = request.form.get('correct_answer')
+
+        new_question = Question(
+            question_statement=question_statement,
+            quiz_id=quiz_id,
+            chapter_id=chapter_id,
+            option1=option1,
+            option2=option2,
+            option3=option3,
+            option4=option4,
+            correct_answer=correct_answer
+        )
+        
+        db.session.add(new_question)
+        db.session.commit()
+        flash('Question added successfully!', 'success')
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debug print
+        flash('Error adding question. Please try again.', 'error')
+        db.session.rollback()
+        
+    return redirect(url_for('routes.view_questions', quiz_id=quiz_id))
+
+@app.route('/delete_question/<int:question_id>', methods=['POST'])
+def delete_question(question_id):
+    question = Question.query.get(question_id)
+    if question:
+        db.session.delete(question)
+        db.session.commit()
+        flash('Question deleted successfully!', 'success')
+    else:
+        flash('Question not found!', 'danger')
+    return redirect(url_for('routes.view_questions', quiz_id=question.quiz_id))
+
+@app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
+def edit_course(course_id):
+    course = Course.query.get(course_id)
+    if request.method == 'POST':
+        course.name = request.form['course_name']
+        db.session.commit()
+        flash('Course updated successfully!', 'success')
+        return redirect(url_for('routes.admin_dashboard'))
+    return render_template('edit_course.html', course=course)
+
+@app.route('/delete_course/<int:course_id>', methods=['POST'])
+def delete_course(course_id):
+    course = Course.query.get(course_id)
+    if course:
+        db.session.delete(course)
+        db.session.commit()
+        flash('Course deleted successfully!', 'success')
+    return redirect(url_for('routes.admin_dashboard'))  # Redirect to admin dashboard
+@app.route('/quizzes/<int:quiz_id>/questions', methods=['GET'])
+def view_questions(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz not found!', 'danger')
+        return redirect(url_for('routes.chapters', course_id=quiz.chapter.course_id))
+    
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()  # Fetch questions for the quiz
+    chapter_id = quiz.chapter.id if quiz.chapter else None  # Get chapter_id from the quiz
+
+    return render_template('view_questions.html', quiz=quiz, questions=questions, chapter_id = chapter_id)
+
+
+
+# @app.route('/questions/<int:chapter_id>')
+# def view_questions(chapter_id):
+#     chapter = Chapter.query.get(chapter_id)
+#     questions = Question.query.filter_by(chapter_id=chapter_id).all()  # Fetch questions for the selected chapter
+#     return render_template('view_questions.html', chapter=chapter, questions=questions)
+
+
+@app.route('/chapters/<int:chapter_id>/quizzes/add', methods=['POST'])
+def add_quiz(chapter_id):
+    # Get chapter first
+    chapter = Chapter.query.get_or_404(chapter_id)
+    
+    quiz_name = request.form.get('quiz_name')
+    date_of_quiz_str = request.form.get('date_of_quiz')
+    time_duration = request.form.get('time_duration')
+    remarks = request.form.get('remarks')
+
+    if quiz_name and date_of_quiz_str:
+        # Convert string to datetime
+        try:
+            date_of_quiz = datetime.fromisoformat(date_of_quiz_str)
+            current_time = datetime.utcnow()
+
+            # Check if quiz date is in the past
+            if date_of_quiz < current_time:
+                flash('Quiz date cannot be in the past!', 'danger')
+                return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+
+            new_quiz = Quiz(
+                name=quiz_name,
+                chapter_id=chapter_id,
+                course_id=chapter.course_id,
+                date_of_quiz=date_of_quiz,
+                time_duration=time_duration,
+                remarks=remarks
+            )
+            db.session.add(new_quiz)
+            db.session.commit()
+            flash('Quiz added successfully!', 'success')
+        except ValueError:
+            flash('Invalid date format!', 'danger')
+    else:
+        flash('Quiz name and date are required!', 'danger')
+    
+    return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+
+@app.route('/quizzes/<int:quiz_id>/edit', methods=['GET', 'POST'])
+def edit_quiz(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if request.method == 'POST':
+        quiz_name = request.form.get('quiz_name')
+        date_of_quiz_str = request.form.get('date_of_quiz')
+        time_duration = request.form.get('time_duration')
+        remarks = request.form.get('remarks')
+
+        if quiz_name:
+            # Convert the date string to a datetime object
+            date_of_quiz = datetime.fromisoformat(date_of_quiz_str) if date_of_quiz_str else None
+            
+            # Update quiz details
+            quiz.name = quiz_name
+            quiz.date_of_quiz = date_of_quiz
+            quiz.time_duration = int(time_duration) if time_duration else None
+            quiz.remarks = remarks
+            
+            db.session.commit()
+            flash('Quiz updated successfully!', 'success')
+            return redirect(url_for('routes.chapters', course_id=quiz.chapter.course_id))
+    return render_template('edit_quiz.html', quiz=quiz)
+@app.route('/quizzes/<int:quiz_id>/delete', methods=['POST'])
+def delete_quiz(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if quiz:
+        # Store the course_id before deleting the quiz
+        course_id = quiz.chapter.course_id if quiz.chapter else None
+        
+        # Delete all questions associated with the quiz
+        for question in quiz.questions:
+            db.session.delete(question)
+        
+        # Now delete the quiz itself
+        db.session.delete(quiz)
+        db.session.commit()
+        
+        flash('Quiz and associated questions deleted successfully!', 'success')
+    else:
+        flash('Quiz not found!', 'danger')
+    
+    # Redirect using the stored course_id
+    return redirect(url_for('routes.chapters', course_id=course_id))
+
+
+@app.route('/chapters/<int:chapter_id>', methods=['GET'])
+def view_chapter(chapter_id):
+    chapter = Chapter.query.get(chapter_id)
+    if not chapter:
+        flash('Chapter not found!', 'danger')
+        return redirect(url_for('routes.home'))
+
+    quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()  # Fetch quizzes for the chapter
+    return render_template('view_chapter.html', chapter=chapter, quizzes=quizzes)
+
+@app.route('/quizzes/<int:quiz_id>/take_test', methods=['GET'])
+def take_test(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz not found!', 'danger')
+        return redirect(url_for('routes.home'))
+
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()  # Fetch questions for the quiz
+    due_date = quiz.date_of_quiz  # Assuming you have a due_date field in your Quiz model
+    return render_template('take_test.html', quiz=quiz, questions=questions, due_date=due_date)
+
+@app.route('/questions/<int:question_id>/edit', methods=['POST'])
+def edit_question(question_id):
+    print('11111111111111')
+    try:
+        # Get the question or return 404 if not found
+        question = Question.query.get_or_404(question_id)
+        
+        # Debug print
+        print(f"Editing question {question_id}")
+        print(f"Form data: {request.form}")
+        
+        # Update question fields
+        question.question_statement = request.form['question_statement']
+        question.option1 = request.form['option1']
+        question.option2 = request.form['option2']
+        question.option3 = request.form['option3']
+        question.option4 = request.form['option4']
+        question.correct_answer = request.form['correct_answer']
+
+        # Save changes
+        db.session.commit()
+        flash('Question updated successfully!', 'success')
+        
+    except Exception as e:
+        print(f"Error updating question: {str(e)}")
+        flash('Error updating question. Please try again.', 'error')
+        db.session.rollback()
+        
+    return redirect(url_for('routes.view_questions', quiz_id=question.quiz_id))
+
+@app.route('/submit_test/<int:quiz_id>', methods=['POST'])
+def submit_test(quiz_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to submit the test', 'warning')
+        return redirect(url_for('routes.login'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Calculate score and store responses
+    score = 0
+    responses = {}
+    
+    for question in questions:
+        selected_answer = request.form.get(f'question_{question.id}')
+        # Store both the selected answer and correct answer
+        responses[str(question.id)] = {
+            'question_text': question.question_statement,
+            'selected_option': selected_answer,
+            'correct_option': question.correct_answer,
+            'options': {
+                '1': question.option1,
+                '2': question.option2,
+                '3': question.option3,
+                '4': question.option4
+            }
+        }
+        if selected_answer == question.correct_answer:
+            score += 1
+    
+    # Record attempt with detailed responses
+    attempt = StudentQuizAttempt(
+        student_id=user_id,
+        quiz_id=quiz_id,
+        score=score,
+        total_questions=len(questions),
+        student_answers=responses,
+        attempt_date=datetime.utcnow()
+    )
+    
+    db.session.add(attempt)
+    db.session.commit()
+    
+    flash(f'Quiz submitted! Your score: {score}/{len(questions)}', 'success')
+    return redirect(url_for('routes.view_attempt', attempt_id=attempt.id))
+
+
+@app.route('/view_attempt/<int:attempt_id>')
+def view_attempt(attempt_id):
+    attempt = StudentQuizAttempt.query.get(attempt_id)
+
+    if not attempt:
+        return "Attempt not found", 404
+
+    quiz = Quiz.query.get(attempt.quiz_id)
+    questions = Question.query.filter_by(quiz_id=attempt.quiz_id).all()
+
+    return render_template('view_attempt.html', attempt=attempt, quiz=quiz, questions=questions)
+
+
+@app.route('/student/chapters/<int:course_id>')
+def student_chapters(course_id):
+    # Get user from session
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to view chapters', 'warning')
+        return redirect(url_for('routes.login'))
+    
+    user = User.query.get(user_id)
+    course = Course.query.get_or_404(course_id)
+    chapters = Chapter.query.filter_by(course_id=course_id).all()
+    
+    # Get current time for date comparison
+    current_time = datetime.utcnow()
+    
+    # Get all quiz attempts by the student
+    student_attempts = StudentQuizAttempt.query.filter_by(student_id=user_id).all()
+    attempted_quiz_ids = {attempt.quiz_id for attempt in student_attempts}
+    
+    # Create a dictionary of last attempts for each quiz
+    last_attempts = {}
+    for attempt in student_attempts:
+        if attempt.quiz_id not in last_attempts or attempt.attempt_date > last_attempts[attempt.quiz_id].attempt_date:
+            last_attempts[attempt.quiz_id] = attempt
+    
+    # Process quiz information for each chapter
+    for chapter in chapters:
+        for quiz in chapter.quizzes:
+            # Check if quiz has been attempted
+            quiz.attempted = quiz.id in attempted_quiz_ids
+            if quiz.attempted:
+                last_attempt = last_attempts[quiz.id]
+                quiz.score = last_attempt.score
+                quiz.total_questions = last_attempt.total_questions
+                quiz.last_attempt_id = last_attempt.id
+            
+            # Check if quiz is available based on date_of_quiz
+            if quiz.date_of_quiz:
+                quiz_datetime = quiz.date_of_quiz
+                if isinstance(quiz_datetime, date):
+                    quiz_datetime = datetime.combine(quiz_datetime, datetime.min.time())
+                
+                quiz.is_available = current_time <= quiz_datetime
+                quiz.is_deadline_close = (quiz_datetime - current_time).total_seconds() <= 86400 and quiz.is_available
+            else:
+                quiz.is_available = True
+                quiz.is_deadline_close = False
+    
+    return render_template('student_chapters.html', 
+                         course=course,
+                         chapters=chapters,
+                         user=user)
+    
+
+
+
+
+
+
+    from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime, timedelta, date
+from werkzeug.security import generate_password_hash, check_password_hash
+
+db = SQLAlchemy()
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(120), unique=True, nullable=False) 
+    password_hash = db.Column(db.String(128), nullable=False)
+    full_name = db.Column(db.String(100), nullable=False)
+    qualification = db.Column(db.String(100), nullable=False)
+    dob = db.Column(db.Date, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False) 
+
+    scores = db.relationship('Score', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Course(db.Model):
+    __tablename__ = "courses"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(80))
+    chapters = db.relationship('Chapter', back_populates='related_course')
+    quizzes = db.relationship('Quiz', back_populates='related_course')
+
+class Chapter(db.Model):
+    __tablename__ = "chapters"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+
+    related_course = db.relationship('Course', back_populates='chapters')
+    questions = db.relationship('Question', back_populates='chapter')
+    quizzes = db.relationship('Quiz', back_populates='chapter')
+
+class Quiz(db.Model):
+    __tablename__ = "quizzes"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    date_of_quiz = db.Column(db.Date, nullable=False)
+    time_duration = db.Column(db.String(10))  # Format: hh:mm
+    remarks = db.Column(db.String(255))
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapters.id'), nullable=False)
+
+    related_course = db.relationship('Course', back_populates='quizzes')
+    chapter = db.relationship('Chapter', back_populates='quizzes')
+    questions = db.relationship('Question', back_populates='quiz', lazy=True)
+    scores = db.relationship('Score', backref='quiz', lazy=True)
+
+class Question(db.Model):
+    __tablename__ = "questions"
+    id = db.Column(db.Integer, primary_key=True)
+    question_statement = db.Column(db.String(255), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapters.id'), nullable=False)
+    option1 = db.Column(db.String(100), nullable=False)
+    option2 = db.Column(db.String(100), nullable=False)
+    option3 = db.Column(db.String(100))
+    option4 = db.Column(db.String(100))
+    correct_answer = db.Column(db.String(100), nullable=False)
+
+    quiz = db.relationship('Quiz', back_populates='questions')
+    chapter = db.relationship('Chapter', back_populates='questions')
+
+class Score(db.Model):
+    __tablename__ = "scores"
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    time_stamp_of_attempt = db.Column(db.DateTime, nullable=False)
+    total_scored = db.Column(db.Integer, nullable=False)
+
+class StudentQuizAttempt(db.Model):
+    __tablename__ = 'student_quiz_attempts'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quizzes.id'), nullable=False)
+    score = db.Column(db.Integer, default=0)
+    total_questions = db.Column(db.Integer, default=0)
+    attempt_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Store answers given by student
+    student_answers = db.Column(db.JSON)  # {'question_id': 'selected_option'}
+    
+    # Relationships without modifying existing models
+    student = db.relationship('User', backref=db.backref('quiz_attempts', lazy=True))
+    quiz = db.relationship('Quiz', backref=db.backref('student_attempts', lazy=True))
+
+def init_db(app):
+    with app.app_context():
+        db.create_all()
+        if User.query.filter_by(username='admin@example.com').first() is None:
+            admin = User(
+                username='admin@example.com',  
+                full_name='Quiz Master',       
+                qualification='Admin',          
+                dob=datetime.strptime('2000-01-01', '%Y-%m-%d').date(),
+                is_admin=True                   
+            )
+            admin.set_password('admin_password')  
+            db.session.add(admin)
+            db.session.commit()
+
+
+
+view questions
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions for {{ quiz.name }}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Questions for Quiz: {{ quiz.name }}</h1>
+        
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Quiz Management</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.home') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.admin_dashboard') }}">Admin Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('routes.chapters', course_id=quiz.chapter.course_id) }}">Chapters</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="mb-4">
+            <a href="{{ url_for('routes.chapters', course_id=quiz.chapter.course_id) }}" class="btn btn-secondary">Back to Chapters</a>
+        </div>
+
+        <!-- Add Question Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Add Question</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('routes.add_question') }}" method="POST">
+                    <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                    <input type="hidden" name="chapter_id" value="{{ quiz.chapter.id }}">
+                    <div class="form-group">
+                        <input type="text" name="question_statement" class="form-control" placeholder="New Question" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="option1" class="form-control mb-2" placeholder="Option 1" required>
+                        <input type="text" name="option2" class="form-control mb-2" placeholder="Option 2" required>
+                        <input type="text" name="option3" class="form-control mb-2" placeholder="Option 3" required>
+                        <input type="text" name="option4" class="form-control mb-2" placeholder="Option 4" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="correct_answer">Mark Correct Option:</label>
+                        <select name="correct_answer" id="correct_answer" class="form-control" required>
+                            <option value="">Select correct option</option>
+                            <option value="option1">Option 1</option>
+                            <option value="option2">Option 2</option>
+                            <option value="option3">Option 3</option>
+                            <option value="option4">Option 4</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Question</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- List of Questions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Existing Questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for question in questions %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6>{{ question.question_statement }}</h6>
+                                    <small>Options:</small>
+                                    <ul class="list-unstyled ml-3">
+                                        <li>1. {{ question.option1 }} {% if question.correct_answer == 'option1' %}<span class="badge badge-success">✓</span>{% endif %}</li>
+                                        <li>2. {{ question.option2 }} {% if question.correct_answer == 'option2' %}<span class="badge badge-success">✓</span>{% endif %}</li>
+                                        <li>3. {{ question.option3 }} {% if question.correct_answer == 'option3' %}<span class="badge badge-success">✓</span>{% endif %}</li>
+                                        <li>4. {{ question.option4 }} {% if question.correct_answer == 'option4' %}<span class="badge badge-success">✓</span>{% endif %}</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editQuestionModal{{ question.id }}">
+                                        Edit
+                                    </button>
+                                    <form action="{{ url_for('routes.delete_question', question_id=question.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit Question Modal -->
+                        <div class="modal fade" id="editQuestionModal{{ question.id }}" tabindex="-1" role="dialog" aria-labelledby="editQuestionModalLabel{{ question.id }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="editQuestionModalLabel{{ question.id }}">Edit Question</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="{{ url_for('routes.edit_question', question_id=question.id) }}" method="POST">
+                                            <div class="form-group">
+                                                <label for="question_statement{{ question.id }}">Question:</label>
+                                                <input type="text" class="form-control" id="question_statement{{ question.id }}" name="question_statement" value="{{ question.question_statement }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>Options:</label>
+                                                <input type="text" class="form-control mb-2" name="option1" value="{{ question.option1 }}" required>
+                                                <input type="text" class="form-control mb-2" name="option2" value="{{ question.option2 }}" required>
+                                                <input type="text" class="form-control mb-2" name="option3" value="{{ question.option3 }}" required>
+                                                <input type="text" class="form-control mb-2" name="option4" value="{{ question.option4 }}" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="correct_answer{{ question.id }}">Correct Answer:</label>
+                                                <select class="form-control" id="correct_answer{{ question.id }}" name="correct_answer" required>
+                                                    <option value="option1" {% if question.correct_answer == 'option1' %}selected{% endif %}>Option 1</option>
+                                                    <option value="option2" {% if question.correct_answer == 'option2' %}selected{% endif %}>Option 2</option>
+                                                    <option value="option3" {% if question.correct_answer == 'option3' %}selected{% endif %}>Option 3</option>
+                                                    <option value="option4" {% if question.correct_answer == 'option4' %}selected{% endif %}>Option 4</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="list-group-item">No questions available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+
+
+
+routessssssssssss
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, date
+from models import db, User, Course, Score, Chapter, Question, Quiz, StudentQuizAttempt
+from flask import Blueprint
+from flask_login import login_required, current_user
+
+app = Blueprint('routes', __name__)
+
+@app.route('/')
+def home():
+    user_id = session.get('user_id')  # Get user ID from session
+    user = User.query.get(user_id) if user_id else None  # Fetch user if logged in
+    courses = []
+
+    if user:
+        courses = Course.query.filter_by(category=user.qualification).all()  # Fetch courses based on user's qualification
+
+    return render_template('HomePage.html', user=user, courses=courses)  # Pass user and courses to template
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        full_name = request.form['full_name']
+        qualification = request.form['qualification']
+        dob = request.form['dob']
+
+        # Check if the username already exists
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists. Please choose a different one.', 'danger')
+            return redirect(url_for('routes.register'))
+
+        # Create a new user
+        new_user = User(
+            username=username,
+            full_name=full_name,
+            qualification=qualification,
+            dob=datetime.strptime(dob, '%Y-%m-%d').date()  # Convert to date object
+        )
+        new_user.set_password(password)  # Hash the password
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('routes.login'))
+
+    return render_template('register.html')  # Render registration template
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            session['user_id'] = user.id  # Store user ID in session
+            session['is_admin'] = user.is_admin  # Store admin status in session
+            flash('Login successful!', 'success')
+            if user.is_admin:
+                return redirect(url_for('routes.admin_dashboard'))  # Redirect to admin dashboard
+            return redirect(url_for('routes.home'))  # Redirect to home for regular users
+        else:
+            flash('Invalid username or password.', 'danger')
+
+    return render_template('login.html')  # Render login template
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)  # Remove user ID from session
+    flash('You have been logged out.', 'success')  # Flash message
+    return redirect(url_for('routes.home'))  # Redirect to home
+
+@app.route('/courses', methods=['GET', 'POST'])
+def courses():
+    search_query = request.args.get('search', '')
+    category_filter = request.args.get('category', '')
+
+    # Fetch courses based on search query and category
+    query = Course.query
+    if search_query:
+        query = query.filter(Course.name.ilike(f'%{search_query}%'))
+    if category_filter:
+        query = query.filter(Course.category == category_filter)
+
+    courses = query.all()
+    return render_template('courses.html', courses=courses, search_query=search_query, category_filter=category_filter)
+
+@app.route('/add_course', methods=['POST'])
+def add_course():
+    course_name = request.form['course_name']
+    category = request.form['category']
+    new_course = Course(name=course_name, category=category)
+    db.session.add(new_course)
+    db.session.commit()
+    flash('Course added successfully!', 'success')
+    return redirect(url_for('routes.admin_dashboard'))  # Redirect back to the dashboard
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    # Initialize categorized_courses
+    categorized_courses = {
+        'Foundation': [],
+        'Diploma': [],
+        'Degree': []
+    }
+
+    # Fetch courses from the database
+    courses = Course.query.all()
+    
+    # Categorize courses safely
+    for course in courses:
+        if course.category in categorized_courses:
+            categorized_courses[course.category].append(course)
+        else:
+            # Handle unexpected categories by either ignoring them or adding them dynamically
+            categorized_courses.setdefault(course.category, []).append(course)
+
+    return render_template('admin_dashboard.html', categorized_courses=categorized_courses)
+
+@app.route('/chapters/<int:course_id>')
+def chapters(course_id):
+    course = Course.query.get(course_id)  # Fetch the course by ID
+    chapters = Chapter.query.filter_by(course_id=course_id).all()  
+    # Fetch chapters for the selected course
+    questions = Question.query.filter(Question.chapter_id.in_([c.id for c in chapters])).all()
+    
+    return render_template('chapters.html', course=course, chapters=chapters, questions = questions)
+
+@app.route('/add_chapter', methods=['POST'])
+def add_chapter():
+    chapter_name = request.form['chapter_name']
+    course_id = request.form['course_id']
+    new_chapter = Chapter(name=chapter_name, course_id=course_id)
+    db.session.add(new_chapter)
+    db.session.commit()
+    flash('Chapter added successfully!', 'success')
+    return redirect(url_for('routes.chapters', course_id=course_id))
+
+@app.route('/edit_chapter/<int:chapter_id>', methods=['GET', 'POST'])
+def edit_chapter(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    course = Course.query.get_or_404(chapter.course_id)  # Get the course using course_id
+    
+    if request.method == 'POST':
+        try:
+            chapter_name = request.form.get('chapter_name')
+            if not chapter_name:
+                flash('Chapter name is required!', 'danger')
+            else:
+                chapter.name = chapter_name
+                db.session.commit()
+                flash('Chapter updated successfully!', 'success')
+                return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating chapter. Please try again.', 'danger')
+            print(f"Error: {str(e)}")
+    
+    return render_template('chapters.html', edit_chapter=chapter, course=course, chapters=course.chapters)
+
+@app.route('/chapters/<int:chapter_id>/delete', methods=['POST'])
+def delete_chapter(chapter_id):
+    chapter = Chapter.query.get_or_404(chapter_id)
+    try:
+        # Get all quizzes for this chapter
+        quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
+        
+        for quiz in quizzes:
+            # Delete all student attempts for this quiz
+            StudentQuizAttempt.query.filter_by(quiz_id=quiz.id).delete()
+            
+            # Delete all questions for this quiz
+            Question.query.filter_by(quiz_id=quiz.id).delete()
+            
+            # Delete the quiz
+            db.session.delete(quiz)
+        
+        # Delete the chapter
+        db.session.delete(chapter)
+        db.session.commit()
+        flash('Chapter and all associated content deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting chapter. Please try again.', 'danger')
+        print(f"Error: {str(e)}")
+    
+    return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+    
+@app.route('/add_question', methods=['POST'])
+def add_question():
+    try:
+        question_statement = request.form['question_statement']
+        quiz_id = request.form['quiz_id']
+        chapter_id = request.form['chapter_id']
+        
+        # Debug print
+        print(f"Received chapter_id: {chapter_id}")
+        
+        option1 = request.form['option1']
+        option2 = request.form['option2']
+        option3 = request.form['option3']
+        option4 = request.form['option4']
+        correct_answer = request.form.get('correct_answer')
+
+        new_question = Question(
+            question_statement=question_statement,
+            quiz_id=quiz_id,
+            chapter_id=chapter_id,
+            option1=option1,
+            option2=option2,
+            option3=option3,
+            option4=option4,
+            correct_answer=correct_answer
+        )
+        
+        db.session.add(new_question)
+        db.session.commit()
+        flash('Question added successfully!', 'success')
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")  # Debug print
+        flash('Error adding question. Please try again.', 'error')
+        db.session.rollback()
+        
+    return redirect(url_for('routes.view_questions', quiz_id=quiz_id))
+
+@app.route('/delete_question/<int:question_id>', methods=['POST'])
+def delete_question(question_id):
+    question = Question.query.get(question_id)
+    if question:
+        db.session.delete(question)
+        db.session.commit()
+        flash('Question deleted successfully!', 'success')
+    else:
+        flash('Question not found!', 'danger')
+    return redirect(url_for('routes.view_questions', quiz_id=question.quiz_id))
+
+@app.route('/edit_course/<int:course_id>', methods=['GET', 'POST'])
+def edit_course(course_id):
+    course = Course.query.get(course_id)
+    if request.method == 'POST':
+        course.name = request.form['course_name']
+        db.session.commit()
+        flash('Course updated successfully!', 'success')
+        return redirect(url_for('routes.admin_dashboard'))
+    return render_template('edit_course.html', course=course)
+
+@app.route('/delete_course/<int:course_id>', methods=['POST'])
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    try:
+        # Get all chapters for this course
+        chapters = Chapter.query.filter_by(course_id=course_id).all()
+        
+        for chapter in chapters:
+            # Get all quizzes for this chapter
+            quizzes = Quiz.query.filter_by(chapter_id=chapter.id).all()
+            
+            for quiz in quizzes:
+                # Delete all student attempts for this quiz
+                StudentQuizAttempt.query.filter_by(quiz_id=quiz.id).delete()
+                
+                # Delete all questions for this quiz
+                Question.query.filter_by(quiz_id=quiz.id).delete()
+                
+                # Delete the quiz
+                db.session.delete(quiz)
+            
+            # Delete the chapter
+            db.session.delete(chapter)
+        
+        # Finally delete the course
+        db.session.delete(course)
+        db.session.commit()
+        flash('Course and all associated content deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting course. Please try again.', 'danger')
+        print(f"Error: {str(e)}")
+    
+    return redirect(url_for('routes.admin_dashboard'))
+
+@app.route('/quizzes/<int:quiz_id>/questions', methods=['GET'])
+def view_questions(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz not found!', 'danger')
+        return redirect(url_for('routes.chapters', course_id=quiz.chapter.course_id))
+    
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()  # Fetch questions for the quiz
+    chapter_id = quiz.chapter.id if quiz.chapter else None  # Get chapter_id from the quiz
+
+    return render_template('view_questions.html', quiz=quiz, questions=questions, chapter_id = chapter_id)
+
+
+
+# @app.route('/questions/<int:chapter_id>')
+# def view_questions(chapter_id):
+#     chapter = Chapter.query.get(chapter_id)
+#     questions = Question.query.filter_by(chapter_id=chapter_id).all()  # Fetch questions for the selected chapter
+#     return render_template('view_questions.html', chapter=chapter, questions=questions)
+
+
+@app.route('/chapters/<int:chapter_id>/quizzes/add', methods=['POST'])
+def add_quiz(chapter_id):
+    # Get chapter first
+    chapter = Chapter.query.get_or_404(chapter_id)
+    
+    quiz_name = request.form.get('quiz_name')
+    date_of_quiz_str = request.form.get('date_of_quiz')
+    time_duration = request.form.get('time_duration')
+    remarks = request.form.get('remarks')
+
+    if quiz_name and date_of_quiz_str:
+        # Convert string to datetime
+        try:
+            date_of_quiz = datetime.fromisoformat(date_of_quiz_str)
+            current_time = datetime.utcnow()
+
+            # Check if quiz date is in the past
+            if date_of_quiz < current_time:
+                flash('Quiz date cannot be in the past!', 'danger')
+                return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+
+            new_quiz = Quiz(
+                name=quiz_name,
+                chapter_id=chapter_id,
+                course_id=chapter.course_id,
+                date_of_quiz=date_of_quiz,
+                time_duration=time_duration,
+                remarks=remarks
+            )
+            db.session.add(new_quiz)
+            db.session.commit()
+            flash('Quiz added successfully!', 'success')
+        except ValueError:
+            flash('Invalid date format!', 'danger')
+    else:
+        flash('Quiz name and date are required!', 'danger')
+    
+    return redirect(url_for('routes.chapters', course_id=chapter.course_id))
+
+@app.route('/quizzes/<int:quiz_id>/edit', methods=['GET', 'POST'])
+def edit_quiz(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if request.method == 'POST':
+        quiz_name = request.form.get('quiz_name')
+        date_of_quiz_str = request.form.get('date_of_quiz')
+        time_duration = request.form.get('time_duration')
+        remarks = request.form.get('remarks')
+
+        if quiz_name:
+            # Convert the date string to a datetime object
+            date_of_quiz = datetime.fromisoformat(date_of_quiz_str) if date_of_quiz_str else None
+            
+            # Update quiz details
+            quiz.name = quiz_name
+            quiz.date_of_quiz = date_of_quiz
+            quiz.time_duration = int(time_duration) if time_duration else None
+            quiz.remarks = remarks
+            
+            db.session.commit()
+            flash('Quiz updated successfully!', 'success')
+            return redirect(url_for('routes.chapters', course_id=quiz.chapter.course_id))
+    return render_template('edit_quiz.html', quiz=quiz)
+@app.route('/quizzes/<int:quiz_id>/delete', methods=['POST'])
+def delete_quiz(quiz_id):
+    quiz = Quiz.query.get_or_404(quiz_id)
+    try:
+        # Delete all student attempts for this quiz
+        StudentQuizAttempt.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # Delete all questions for this quiz
+        Question.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # Store chapter_id before deleting quiz
+        chapter_id = quiz.chapter_id
+        
+        # Delete the quiz
+        db.session.delete(quiz)
+        db.session.commit()
+        flash('Quiz and all associated content deleted successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting quiz. Please try again.', 'danger')
+        print(f"Error: {str(e)}")
+    
+    return redirect(url_for('routes.chapters', course_id=quiz.chapter.course_id))
+
+
+@app.route('/chapters/<int:chapter_id>', methods=['GET'])
+def view_chapter(chapter_id):
+    chapter = Chapter.query.get(chapter_id)
+    if not chapter:
+        flash('Chapter not found!', 'danger')
+        return redirect(url_for('routes.home'))
+
+    quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()  # Fetch quizzes for the chapter
+    return render_template('view_chapter.html', chapter=chapter, quizzes=quizzes)
+
+@app.route('/quizzes/<int:quiz_id>/take_test', methods=['GET'])
+def take_test(quiz_id):
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz not found!', 'danger')
+        return redirect(url_for('routes.home'))
+
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()  # Fetch questions for the quiz
+    due_date = quiz.date_of_quiz  # Assuming you have a due_date field in your Quiz model
+    return render_template('take_test.html', quiz=quiz, questions=questions, due_date=due_date)
+
+@app.route('/edit_question/<int:question_id>', methods=['GET', 'POST'])
+def edit_question(question_id):
+    question = Question.query.get_or_404(question_id)
+    quiz = Quiz.query.get_or_404(question.quiz_id)  # Get the quiz using quiz_id
+
+    if request.method == 'POST':
+        try:
+            question_statement = request.form.get('question_statement')
+            option1 = request.form.get('option1')
+            option2 = request.form.get('option2')
+            option3 = request.form.get('option3')
+            option4 = request.form.get('option4')
+            correct_answer = request.form.get('correct_answer')
+
+            # Validate required fields
+            if not all([question_statement, option1, option2, option3, option4, correct_answer]):
+                flash('All fields are required!', 'danger')
+            else:
+                # Update question
+                question.question_statement = question_statement
+                question.option1 = option1
+                question.option2 = option2
+                question.option3 = option3
+                question.option4 = option4
+                question.correct_answer = correct_answer
+
+                db.session.commit()
+                flash('Question updated successfully!', 'success')
+                return redirect(url_for('routes.view_questions', quiz_id=quiz.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating question. Please try again.', 'danger')
+            print(f"Error: {str(e)}")
+
+    return render_template('view_questions.html', edit_question=question, quiz=quiz, questions=quiz.questions)
+
+@app.route('/submit_test/<int:quiz_id>', methods=['POST'])
+def submit_test(quiz_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to submit the test', 'warning')
+        return redirect(url_for('routes.login'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Calculate score and store responses
+    score = 0
+    responses = {}
+    
+    for question in questions:
+        selected_answer = request.form.get(f'question_{question.id}')
+        # Store both the selected answer and correct answer
+        responses[str(question.id)] = {
+            'question_text': question.question_statement,
+            'selected_option': selected_answer,
+            'correct_option': question.correct_answer,
+            'options': {
+                '1': question.option1,
+                '2': question.option2,
+                '3': question.option3,
+                '4': question.option4
+            }
+        }
+        if selected_answer == question.correct_answer:
+            score += 1
+    
+    # Record attempt with detailed responses
+    attempt = StudentQuizAttempt(
+        student_id=user_id,
+        quiz_id=quiz_id,
+        score=score,
+        total_questions=len(questions),
+        student_answers=responses,
+        attempt_date=datetime.utcnow()
+    )
+    
+    db.session.add(attempt)
+    db.session.commit()
+    
+    flash(f'Quiz submitted! Your score: {score}/{len(questions)}', 'success')
+    return redirect(url_for('routes.view_attempt', attempt_id=attempt.id))
+
+
+@app.route('/view_attempt/<int:attempt_id>')
+def view_attempt(attempt_id):
+    attempt = StudentQuizAttempt.query.get(attempt_id)
+
+    if not attempt:
+        return "Attempt not found", 404
+
+    quiz = Quiz.query.get(attempt.quiz_id)
+    questions = Question.query.filter_by(quiz_id=attempt.quiz_id).all()
+
+    return render_template('view_attempt.html', attempt=attempt, quiz=quiz, questions=questions)
+
+
+@app.route('/student/chapters/<int:course_id>')
+def student_chapters(course_id):
+    # Get user from session
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to view chapters', 'warning')
+        return redirect(url_for('routes.login'))
+    
+    user = User.query.get(user_id)
+    course = Course.query.get_or_404(course_id)
+    chapters = Chapter.query.filter_by(course_id=course_id).all()
+    
+    # Get current time for date comparison
+    current_time = datetime.utcnow()
+    
+    # Get all quiz attempts by the student
+    student_attempts = StudentQuizAttempt.query.filter_by(student_id=user_id).all()
+    attempted_quiz_ids = {attempt.quiz_id for attempt in student_attempts}
+    
+    # Create a dictionary of last attempts for each quiz
+    last_attempts = {}
+    for attempt in student_attempts:
+        if attempt.quiz_id not in last_attempts or attempt.attempt_date > last_attempts[attempt.quiz_id].attempt_date:
+            last_attempts[attempt.quiz_id] = attempt
+    
+    # Process quiz information for each chapter
+    for chapter in chapters:
+        for quiz in chapter.quizzes:
+            # Check if quiz has been attempted
+            quiz.attempted = quiz.id in attempted_quiz_ids
+            if quiz.attempted:
+                last_attempt = last_attempts[quiz.id]
+                quiz.score = last_attempt.score
+                quiz.total_questions = last_attempt.total_questions
+                quiz.last_attempt_id = last_attempt.id
+            
+            # Check if quiz is available based on date_of_quiz
+            if quiz.date_of_quiz:
+                quiz_datetime = quiz.date_of_quiz
+                if isinstance(quiz_datetime, date):
+                    quiz_datetime = datetime.combine(quiz_datetime, datetime.min.time())
+                
+                quiz.is_available = current_time <= quiz_datetime
+                quiz.is_deadline_close = (quiz_datetime - current_time).total_seconds() <= 86400 and quiz.is_available
+            else:
+                quiz.is_available = True
+                quiz.is_deadline_close = False
+    
+    return render_template('student_chapters.html', 
+                         course=course,
+                         chapters=chapters,
+                         user=user)
+    
+
+
+@app.route('/admin/stats')
+def admin_stats():
+    # Fetch user counts by qualification
+    foundation_count = User.query.filter_by(qualification='Foundation').count()
+    diploma_count = User.query.filter_by(qualification='Diploma').count()
+    degree_count = User.query.filter_by(qualification='Degree').count()
+
+    # Fetch scores for analysis
+    scores = Score.query.all()
+    score_data = {
+        'foundations': [],
+        'diplomas': [],
+        'degrees': []
+    }
+
+    for score in scores:
+        if score.program == 'Foundation':
+            score_data['foundations'].append(score.value)
+        elif score.program == 'Diploma':
+            score_data['diplomas'].append(score.value)
+        elif score.program == 'Degree':
+            score_data['degrees'].append(score.value)
+
+    # Compute average scores safely
+    def average(lst):
+        return sum(lst) / len(lst) if lst else 0
+
+    avg_scores = {
+        'foundation': average(score_data['foundations']),
+        'diploma': average(score_data['diplomas']),
+        'degree': average(score_data['degrees']),
+    }
+
+    return render_template(
+        'admin_stats.html',
+        foundation_count=foundation_count,
+        diploma_count=diploma_count,
+        degree_count=degree_count,
+        avg_scores=avg_scores
+    )
+
+admin_dashboard
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_stats') }}">Stats</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Manage Users</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Additional Link 2</a></li>
+            </ul>
+            <span class="navbar-text ml-auto">
+                Welcome, Quiz Master!
+            </span>
+            <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2>Admin Dashboard</h2>
+        <div class="row">
+            <div class="col-md-12">
+                <h3>Categories</h3>
+        </div>
+        <div class="row mt-4">
+            {% for category, courses in categorized_courses.items() %}
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ category }}</h5>
+                            <ul class="list-group">
+                                {% for course in courses %}
+                                    <li class="list-group-item">
+                                        <a href="{{ url_for('routes.chapters', course_id=course.id) }}">{{ course.name }}</a>
+                                        <button class="btn btn-warning btn-sm float-right" data-toggle="modal" data-target="#editModal{{ course.id }}">Edit</button>
+                                        <form action="{{ url_for('routes.delete_course', course_id=course.id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm float-right">Delete</button>
+                                        </form>
+                                    </li>
+
+                                    <!-- Edit Course Modal -->
+                                    <div class="modal fade" id="editModal{{ course.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ course.id }}" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="editModalLabel{{ course.id }}">Edit Course</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <form action="{{ url_for('routes.edit_course', course_id=course.id) }}" method="POST">
+                                                    <div class="modal-body">
+                                                        <div class="form-group">
+                                                            <label for="course_name">Course Name</label>
+                                                            <input type="text" class="form-control" name="course_name" value="{{ course.name }}" required>
+                                                        </div>
+                                                        <input type="hidden" name="category" value="{{ course.category }}">
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Save changes</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </ul>
+                            <!-- Add Course Form -->
+                            <form action="{{ url_for('routes.add_course') }}" method="POST" class="mt-3">
+                                <input type="hidden" name="category" value="{{ category }}">
+                                <div class="input-group">
+                                    <input type="text" name="course_name" class="form-control" placeholder="New Course Name" required>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-success" type="submit">Add Course</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+chahhhhhhhpters
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Chapters</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        function toggleEditForm(quizId) {
+            const form = document.getElementById('edit-form-' + quizId);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Stats</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Manage Users</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Additional Link 2</a></li>
+            </ul>
+            <span class="navbar-text ml-auto">
+                Welcome, Quiz Master!
+            </span>
+            <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1>Chapters for Course: {{ course.name }}</h1>
+        
+        <!-- Add Chapter Form -->
+        <form action="{{ url_for('routes.add_chapter', course_id=course.id) }}" method="POST" class="mb-4">
+            <input type="hidden" name="course_id" value="{{ course.id }}">
+            <div class="input-group">
+                <input type="text" name="chapter_name" class="form-control" placeholder="New Chapter Name" required>
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="submit">Add Chapter</button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- At the top of your chapters listing -->
+        {% if edit_chapter %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Edit Chapter</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('routes.edit_chapter', chapter_id=edit_chapter.id) }}">
+                        <div class="form-group">
+                            <label for="chapter_name">Chapter Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="chapter_name" 
+                                   name="chapter_name" 
+                                   value="{{ edit_chapter.name }}" 
+                                   required>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Update Chapter</button>
+                            <a href="{{ url_for('routes.chapters', course_id=course.id) }}" 
+                               class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            {% for chapter in chapters %}
+                <div class="col-md-12 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>{{ chapter.name }}</h4>
+                        <div>
+                            <a href="{{ url_for('routes.edit_chapter', chapter_id=chapter.id) }}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ url_for('routes.delete_chapter', chapter_id=chapter.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete Chapter</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Add Quiz Form -->
+                    <form action="{{ url_for('routes.add_quiz', chapter_id=chapter.id) }}" method="POST" class="mt-2">
+                        <div class="input-group">
+                            <input type="text" name="quiz_name" class="form-control" placeholder="New Quiz Name" required>
+                            <input type="datetime-local" name="date_of_quiz" class="form-control" placeholder="Date of Quiz" required>
+                            <input type="number" name="time_duration" class="form-control" placeholder="Duration (minutes)" required>
+                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">Add Quiz</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Display Quizzes -->
+                    <div class="mt-3">
+                        <h6>Quizzes:</h6>
+                        <div class="row">
+                            {% for quiz in chapter.quizzes %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ quiz.name }}</h5>
+                                            <p class="card-text">Remarks: {{ quiz.remarks }}</p>
+                                            <p class="card-text">Date: {{ quiz.date_of_quiz }}</p>
+                                            <p class="card-text">Duration: {{ quiz.time_duration }} minutes</p>
+                                            <a href="{{ url_for('routes.view_questions', quiz_id=quiz.id) }}" class="btn btn-info">View Questions</a>
+                                            
+                                            
+                                            <!-- Edit Quiz Button -->
+                                            <button class="btn btn-warning btn-sm" onclick="toggleEditForm({{ quiz.id }})">Edit</button>
+                                            
+                                            <!-- Edit Quiz Form -->
+                                            <form id="edit-form-{{ quiz.id }}" action="{{ url_for('routes.edit_quiz', quiz_id=quiz.id) }}" method="POST" style="display:none;" class="mt-2">
+                                                <input type="text" name="quiz_name" class="form-control" value="{{ quiz.name }}" required>
+                                                <input type="datetime-local" name="date_of_quiz" class="form-control" value="{{ quiz.date_of_quiz.isoformat() }}" required>
+                                                <input type="number" name="time_duration" class="form-control" value="{{ quiz.time_duration }}" required>
+                                                <input type="text" name="remarks" class="form-control" value="{{ quiz.remarks }}">
+                                                <button type="submit" class="btn btn-primary btn-sm mt-2">Update Quiz</button>
+                                            </form>
+
+                                            <form action="{{ url_for('routes.delete_quiz', quiz_id=quiz.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="col-md-12">No quizzes available.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background-color: #fff;
+        }
+        .chart-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+        .chart-col {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding: 0 15px;
+        }
+        .chart-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .chart-col {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.user_stats') }}">Your Performance</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.contact') }}">Contact Us</a></li>
+            </ul>
+            {% if user %}
+                <span class="navbar-text">Welcome, {{ user.full_name }}!</span>
+                <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-primary" href="{{ url_for('routes.login') }}">Log In</a>
+                <a class="btn btn-secondary ml-2" href="{{ url_for('routes.register') }}">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="mb-4">Your Progress</h2>
+        <div class="chart-row">
+            <div class="chart-col">
+                <div class="chart-container">
+                    <h4 class="chart-title">Your Average Score</h4>
+                    <canvas id="averageScoreChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-col">
+                <div class="chart-container">
+                    <h4 class="chart-title">Total Quizzes Taken</h4>
+                    <canvas id="quizzesTakenChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        
+        const averageScoreCtx = document.getElementById('averageScoreChart').getContext('2d');
+        const quizzesTakenCtx = document.getElementById('quizzesTakenChart').getContext('2d');
+
+        // Line Chart for Average Score
+        new Chart(averageScoreCtx, {
+            type: 'line',
+            data: {
+                labels: ['Average Score'],
+                datasets: [{
+                    label: 'Your Average Score',
+                    data: [{{ average_score }}],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                }
+            }
+        });
+
+        // Bar Chart for Total Quizzes Taken
+        new Chart(quizzesTakenCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Total Quizzes Taken'],
+                datasets: [{
+                    label: 'Number of Quizzes',
+                    data: [{{ total_quizzes_taken }}],
+                    backgroundColor: ['#36A2EB'],
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

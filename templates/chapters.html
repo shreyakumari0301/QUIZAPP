@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Chapters</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        function toggleEditForm(quizId) {
+            const form = document.getElementById('edit-form-' + quizId);
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="flask-message">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_stats') }}">Stats</a></li>
+               
+            </ul>
+            <span class="navbar-text ml-auto">
+                Welcome, Quiz Master!
+            </span>
+            <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+        </div>
+    </nav>
+
+
+    <div class="container mt-5">
+        <h1>Chapters for Course: {{ course.name }}</h1>
+
+        <div class="container mt-3">
+            <form method="POST" class="form-inline" style="padding-left: 300px;">
+                <input type="text" name="search" class="form-control mr-2" placeholder="Search Chapter or Quiz" value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+        
+        <br>
+        
+        <!-- Add Chapter Form -->
+        <form action="{{ url_for('routes.add_chapter', course_id=course.id) }}" method="POST" class="mb-4">
+            <input type="hidden" name="course_id" value="{{ course.id }}">
+            <div class="input-group">
+                <input type="text" name="chapter_name" class="form-control" placeholder="New Chapter Name" required>
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="submit">Add Chapter</button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- At the top of your chapters listing -->
+        {% if edit_chapter %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Edit Chapter</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('routes.edit_chapter', chapter_id=edit_chapter.id) }}">
+                        <div class="form-group">
+                            <label for="chapter_name">Chapter Name</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="chapter_name" 
+                                   name="chapter_name" 
+                                   value="{{ edit_chapter.name }}" 
+                                   required>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Update Chapter</button>
+                            <a href="{{ url_for('routes.chapters', course_id=course.id) }}" 
+                               class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            {% for chapter in chapters %}
+                <div class="col-md-12 mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4>{{ chapter.name }}</h4>
+                        <div>
+                            <a href="{{ url_for('routes.edit_chapter', chapter_id=chapter.id) }}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <form action="{{ url_for('routes.delete_chapter', chapter_id=chapter.id) }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete Chapter</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Add Quiz Form -->
+                    <form action="{{ url_for('routes.add_quiz', chapter_id=chapter.id) }}" method="POST" class="mt-2">
+                        <div class="input-group">
+                            <input type="text" name="quiz_name" class="form-control" placeholder="New Quiz Name" required>
+                            <input type="datetime-local" name="date_of_quiz" class="form-control" placeholder="Date of Quiz" required>
+                            <input type="number" name="time_duration" class="form-control" placeholder="Duration (minutes)" required>
+                            <input type="text" name="remarks" class="form-control" placeholder="Remarks">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">Add Quiz</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Display Quizzes -->
+                    <div class="mt-3">
+                        <h6>Quizzes:</h6>
+                        <div class="row">
+                            {% for quiz in chapter.quizzes %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ quiz.name }}</h5>
+                                            <p class="card-text">Remarks: {{ quiz.remarks }}</p>
+                                            <p class="card-text">Date: {{ quiz.date_of_quiz }}</p>
+                                            <p class="card-text">Duration: {{ quiz.time_duration }} minutes</p>
+                                            <a href="{{ url_for('routes.view_questions', quiz_id=quiz.id) }}" class="btn btn-info">View Questions</a>
+                                            
+                                            
+                                            <!-- Edit Quiz Button -->
+                                            <button class="btn btn-warning btn-sm" onclick="toggleEditForm({{ quiz.id }})">Edit</button>
+                                            
+                                            <!-- Edit Quiz Form -->
+                                            <form id="edit-form-{{ quiz.id }}" action="{{ url_for('routes.edit_quiz', quiz_id=quiz.id) }}" method="POST" style="display:none;" class="mt-2">
+                                                <input type="text" name="quiz_name" class="form-control" value="{{ quiz.name }}" required>
+                                                <input type="datetime-local" name="date_of_quiz" class="form-control" value="{{ quiz.date_of_quiz.isoformat() }}" required>
+                                                <input type="number" name="time_duration" class="form-control" value="{{ quiz.time_duration }}" required>
+                                                <input type="text" name="remarks" class="form-control" value="{{ quiz.remarks }}">
+                                                <button type="submit" class="btn btn-primary btn-sm mt-2">Update Quiz</button>
+                                            </form>
+
+                                            <form action="{{ url_for('routes.delete_quiz', quiz_id=quiz.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="col-md-12">No quizzes available.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

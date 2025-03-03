@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .course-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            transition: box-shadow 0.3s;
+        }
+        .course-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="flask-message">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.user_stats') }}">Your Performance</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.contact') }}">Contact Us</a></li>
+            </ul>
+            {% if user %}
+                <span class="navbar-text">Welcome, {{ user.full_name }}!</span>
+                <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+            {% else %}
+                <a class="btn btn-primary" href="{{ url_for('routes.login') }}">Log In</a>
+                <a class="btn btn-secondary ml-2" href="{{ url_for('routes.register') }}">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h1>Welcome to Quiz Master</h1>
+        {% if user %}
+        <form method="GET" action="#" class="form-inline mb-4">
+            <input type="text" name="query" class="form-control mr-2" placeholder="Search courses" value="{{ request.args.get('query', '') }}" required>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        {% endif %}
+        
+
+    <div class="row">
+        {% for course in courses %}
+            <div class="col-md-4">
+                <div class="course-card">
+                    <h5 class="card-title">{{ course.name }}</h5>
+                    <a href="{{ url_for('routes.student_chapters', course_id=course.id) }}" class="btn btn-primary">View Chapters</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    </div>
+    <!-- JavaScript to auto-dismiss flash messages -->
+    <script>
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 1000);  // Dismiss alert after 3 seconds
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

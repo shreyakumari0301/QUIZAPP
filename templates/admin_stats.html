@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Statistics</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 80%;
+            height: 400px;
+            margin: auto;
+            border: 1px solid #ddd; /* Light border added */
+            border-radius: 10px; /* Rounded corners */
+            padding: 10px; /* Some padding for spacing */
+            background-color: #f9f9f9; /* Light background */
+        }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="max-width: 50px; border-radius: 10px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('routes.admin_stats') }}">Statistics</a></li>
+                
+            </ul>
+            <span class="navbar-text ml-auto">
+                Welcome, Quiz Master!
+            </span>
+            <a class="btn btn-danger ml-2" href="{{ url_for('routes.logout') }}">Logout</a>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h2>Admin Statistics</h2>
+       
+
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Student Registrations by Program</h4>
+                <div class="chart-container">
+                    <canvas id="registrationChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Scores Analysis</h4>
+                <div class="chart-container">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const registrationCtx = document.getElementById('registrationChart').getContext('2d');
+        const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+
+        // Pie Chart for Student Registrations
+        new Chart(registrationCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Foundation', 'Diploma', 'Degree'],
+                datasets: [{
+                    label: 'Student Registrations',
+                    data: [{{ foundation_count }}, {{ diploma_count }}, {{ degree_count }}],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Student Registrations by Program' }
+                }
+            }
+        });
+
+        // Bar Chart for Scores Analysis
+        new Chart(scoreCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Foundation', 'Diploma', 'Degree'],
+                datasets: [{
+                    label: 'Average Scores',
+                    data: [
+                        {{ avg_scores.foundation }},
+                        {{ avg_scores.diploma }},
+                        {{ avg_scores.degree }}
+                    ],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderColor: 'rgba(255, 255, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: true, text: 'Average Scores by Program' }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

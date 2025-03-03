@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="flask-message">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div class="container mt-5">
+        <h2>Manage Courses</h2>
+        <form action="{{ url_for('routes.courses') }}" method="get" class="mb-3">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search courses..." class="form-control" />
+            <select name="category" class="form-control mt-2">
+                <option value="">All Categories</option>
+                <option value="Foundation" {% if category_filter == 'Foundation' %}selected{% endif %}>Foundation</option>
+                <option value="Diploma" {% if category_filter == 'Diploma' %}selected{% endif %}>Diploma</option>
+                <option value="Degree" {% if category_filter == 'Degree' %}selected{% endif %}>Degree</option>
+            </select>
+            <button type="submit" class="btn btn-primary mt-2">Search</button>
+        </form>
+
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ course.name }}</h5>
+                            <p class="card-text">Category: {{ course.category }}</p>
+                            <a href="{{ url_for('routes.chapters', course_id=course.id) }}" class="btn btn-info">View Chapters</a>
+                            <a href="{{ url_for('routes.delete_course', course_id=course.id) }}" class="btn btn-danger">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <h3>Add New Course</h3>
+        <form action="{{ url_for('routes.add_course') }}" method="post">
+            <div class="form-group">
+                <label for="course_name">Course Name</label>
+                <input type="text" class="form-control" name="course_name" required>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <select class="form-control" name="category" required>
+                    <option value="Foundation">Foundation</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Degree">Degree</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Course</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
