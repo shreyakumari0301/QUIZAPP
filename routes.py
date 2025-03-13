@@ -24,17 +24,6 @@ def home():
     return render_template('HomePage.html', user=user, courses=courses)  
 
 
-# @app.route('/')
-# def home():
-#     user_id = session.get('user_id')  # Get user ID from session
-#     user = User.query.get(user_id) if user_id else None  # Fetch user if logged in
-#     courses = []
-
-#     if user:
-#         courses = Course.query.filter_by(category=user.qualification).all()  # Fetch courses based on user's qualification
-
-#     return render_template('HomePage.html', user=user, courses=courses)  # Pass user and courses to template
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -167,15 +156,6 @@ def chapters(course_id):
                 filtered_chapters.append(chapter_copy)
 
     return render_template('chapters.html', course=course, chapters=filtered_chapters, search_query=search_query)
-
-# @app.route('/chapters/<int:course_id>')
-# def chapters(course_id):
-#     course = Course.query.get(course_id)  # Fetch the course by ID
-#     chapters = Chapter.query.filter_by(course_id=course_id).all()  
-#     # Fetch chapters for the selected course
-#     questions = Question.query.filter(Question.chapter_id.in_([c.id for c in chapters])).all()
-    
-#     return render_template('chapters.html', course=course, chapters=chapters, questions = questions)
 
 @app.route('/add_chapter', methods=['POST'])
 def add_chapter():
@@ -331,15 +311,6 @@ def view_questions(quiz_id):
     chapter_id = quiz.chapter.id if quiz.chapter else None 
 
     return render_template('view_questions.html', quiz=quiz, questions=questions, chapter_id = chapter_id)
-
-
-
-# @app.route('/questions/<int:chapter_id>')
-# def view_questions(chapter_id):
-#     chapter = Chapter.query.get(chapter_id)
-#     questions = Question.query.filter_by(chapter_id=chapter_id).all()  # Fetch questions for the selected chapter
-#     return render_template('view_questions.html', chapter=chapter, questions=questions)
-
 
 @app.route('/chapters/<int:chapter_id>/quizzes/add', methods=['POST'])
 def add_quiz(chapter_id):
@@ -588,61 +559,6 @@ def student_chapters(course_id):
                            chapters=chapters_to_display,
                            user=user,
                            search_query=search_query)
-
-
-# @app.route('/student/chapters/<int:course_id>')
-# def student_chapters(course_id):
-#     # Get user from session
-#     user_id = session.get('user_id')
-#     if not user_id:
-#         flash('Please log in to view chapters', 'warning')
-#         return redirect(url_for('routes.login'))
-    
-#     user = User.query.get(user_id)
-#     course = Course.query.get_or_404(course_id)
-#     chapters = Chapter.query.filter_by(course_id=course_id).all()
-    
-#     # Get current time for date comparison
-#     current_time = datetime.utcnow()
-    
-#     # Get all quiz attempts by the student
-#     student_attempts = StudentQuizAttempt.query.filter_by(student_id=user_id).all()
-#     attempted_quiz_ids = {attempt.quiz_id for attempt in student_attempts}
-    
-#     # Create a dictionary of last attempts for each quiz
-#     last_attempts = {}
-#     for attempt in student_attempts:
-#         if attempt.quiz_id not in last_attempts or attempt.attempt_date > last_attempts[attempt.quiz_id].attempt_date:
-#             last_attempts[attempt.quiz_id] = attempt
-    
-#     # Process quiz information for each chapter
-#     for chapter in chapters:
-#         for quiz in chapter.quizzes:
-#             # Check if quiz has been attempted
-#             quiz.attempted = quiz.id in attempted_quiz_ids
-#             if quiz.attempted:
-#                 last_attempt = last_attempts[quiz.id]
-#                 quiz.score = last_attempt.score
-#                 quiz.total_questions = last_attempt.total_questions
-#                 quiz.last_attempt_id = last_attempt.id
-            
-#             # Check if quiz is available based on date_of_quiz
-#             if quiz.date_of_quiz:
-#                 quiz_datetime = quiz.date_of_quiz
-#                 if isinstance(quiz_datetime, date):
-#                     quiz_datetime = datetime.combine(quiz_datetime, datetime.min.time())
-                
-#                 quiz.is_available = current_time <= quiz_datetime
-#                 quiz.is_deadline_close = (quiz_datetime - current_time).total_seconds() <= 86400 and quiz.is_available
-#             else:
-#                 quiz.is_available = True
-#                 quiz.is_deadline_close = False
-    
-#     return render_template('student_chapters.html', 
-#                          course=course,
-#                          chapters=chapters,
-#                          user=user)
-    
 
 
 @app.route('/admin/stats')
