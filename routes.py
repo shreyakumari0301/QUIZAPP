@@ -14,10 +14,7 @@ def home():
 
     if user:
         if search_query:
-            courses = Course.query.filter(
-                Course.category == user.qualification,
-                Course.name.ilike(f"%{search_query}%")
-            ).all()
+            courses = Course.query.filter(Course.category == user.qualification,Course.name.ilike(f"%{search_query}%")).all()
         else:
             courses = Course.query.filter_by(category=user.qualification).all()
 
@@ -38,11 +35,7 @@ def register():
             return redirect(url_for('routes.register'))
 
         new_user = User(
-            username=username,
-            full_name=full_name,
-            qualification=qualification,
-            dob=datetime.strptime(dob, '%Y-%m-%d').date()  
-        )
+            username=username,full_name=full_name,qualification=qualification,dob=datetime.strptime(dob, '%Y-%m-%d').date())
         new_user.set_password(password)  
         db.session.add(new_user)
         db.session.commit()
@@ -113,38 +106,26 @@ def add_course():
 @app.route('/admin/dashboard', methods=['POST', 'GET'])
 def admin_dashboard():
     search_query = request.form.get('search', '')
-
-    categorized_courses = {
-        'Foundation': [],
-        'Diploma': [],
-        'Degree': []
-    }
-
+    categorized_courses = {'Foundation': [], 'Diploma': [],'Degree': []}
     if search_query:
         courses = Course.query.filter(Course.name.ilike(f"%{search_query}%")).all()
     else:
         courses = Course.query.all()
-
     for course in courses:
         if course.category in categorized_courses:
             categorized_courses[course.category].append(course)
         else:
             categorized_courses.setdefault(course.category, []).append(course)
-
     return render_template('admin_dashboard.html', categorized_courses=categorized_courses, search_query=search_query)
 
 @app.route('/chapters/<int:course_id>', methods=['GET', 'POST'])
 def chapters(course_id):
     course = Course.query.get(course_id) 
     all_chapters = Chapter.query.filter_by(course_id=course_id).all()  
-
     search_query = request.form.get('search', '').strip().lower()
-
     if not search_query:
         return render_template('chapters.html', course=course, chapters=all_chapters)
-
     filtered_chapters = []
-    
     for chapter in all_chapters:
         if search_query in chapter.name.lower():
             filtered_chapters.append(chapter)  
@@ -154,7 +135,6 @@ def chapters(course_id):
                 chapter_copy = Chapter(id=chapter.id, name=chapter.name, course_id=chapter.course_id)
                 chapter_copy.quizzes = matching_quizzes
                 filtered_chapters.append(chapter_copy)
-
     return render_template('chapters.html', course=course, chapters=filtered_chapters, search_query=search_query)
 
 @app.route('/add_chapter', methods=['POST'])
@@ -171,7 +151,6 @@ def add_chapter():
 def edit_chapter(chapter_id):
     chapter = Chapter.query.get_or_404(chapter_id)
     course = Course.query.get_or_404(chapter.course_id) 
-    
     if request.method == 'POST':
         try:
             chapter_name = request.form.get('chapter_name')
@@ -186,7 +165,6 @@ def edit_chapter(chapter_id):
             db.session.rollback()
             flash('Error updating chapter. Please try again.', 'danger')
             print(f"Error: {str(e)}")
-    
     return render_template('chapters.html', edit_chapter=chapter, course=course, chapters=course.chapters)
 
 @app.route('/chapters/<int:chapter_id>/delete', methods=['POST'])
@@ -194,18 +172,13 @@ def delete_chapter(chapter_id):
     chapter = Chapter.query.get_or_404(chapter_id)
     try:
         quizzes = Quiz.query.filter_by(chapter_id=chapter_id).all()
-        
         for quiz in quizzes:
             StudentQuizAttempt.query.filter_by(quiz_id=quiz.id).delete()
-            
             Question.query.filter_by(quiz_id=quiz.id).delete()
-            
             db.session.delete(quiz)
-        
         db.session.delete(chapter)
         db.session.commit()
         flash('Chapter and all associated content deleted successfully!', 'success')
-        
     except Exception as e:
         db.session.rollback()
         flash('Error deleting chapter. Please try again.', 'danger')
@@ -219,15 +192,12 @@ def add_question():
         question_statement = request.form['question_statement']
         quiz_id = request.form['quiz_id']
         chapter_id = request.form['chapter_id']
-        
         print(f"Received chapter_id: {chapter_id}")
-        
         option1 = request.form['option1']
         option2 = request.form['option2']
         option3 = request.form['option3']
         option4 = request.form['option4']
         correct_answer = request.form.get('correct_answer')
-
         new_question = Question(
             question_statement=question_statement,
             quiz_id=quiz_id,
@@ -238,7 +208,6 @@ def add_question():
             option4=option4,
             correct_answer=correct_answer
         )
-        
         db.session.add(new_question)
         db.session.commit()
         flash('Question added successfully!', 'success')
